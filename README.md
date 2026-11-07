@@ -1,0 +1,2 @@
+# BitFSCollectorProtocol
+BitFS Collector Protocol
