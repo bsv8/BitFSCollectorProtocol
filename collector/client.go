@@ -19,11 +19,26 @@ const (
 	HeaderSignature = "X-BitFSCollector-Signature"
 	// HeaderSigVersion 携带签名版本。HeaderSigVersion carries the signature version.
 	HeaderSigVersion = "X-BitFSCollector-SigVersion"
-	// SubmissionsPath 是提交端点。SubmissionsPath is the submission endpoint.
+	// SubmissionsPath 是默认提交路径。SubmissionsPath is the default path.
 	SubmissionsPath = "/v1/submissions"
 	// ContentType 是请求体类型。ContentType is the request body type.
 	ContentType = "application/gzip"
 )
+
+// SubmissionURL 归一化提交地址：已含提交路径（含自定义前缀）则原样使用，
+// 否则补上默认路径。兼容旧配置（只填基地址）。
+// SubmissionURL normalizes the endpoint: use as-is when it already carries
+// the submissions path (custom prefixes allowed), else append the default.
+func SubmissionURL(endpoint string) string {
+	trimmed := strings.TrimSuffix(strings.TrimSpace(endpoint), "/")
+	for strings.HasSuffix(trimmed, "/") {
+		trimmed = strings.TrimSuffix(trimmed, "/")
+	}
+	if strings.HasSuffix(trimmed, SubmissionsPath) {
+		return trimmed
+	}
+	return trimmed + SubmissionsPath
+}
 
 // Receipt 是服务端成功响应。Receipt is the server success response.
 type Receipt struct {
@@ -41,8 +56,10 @@ type ErrorBody struct {
 	Message string `json:"message"`
 }
 
-// Submit 发送实际 gzip 字节并返回归档回执；重试必须复用同一 gzip 与签名。
-// Submit posts the exact gzip bytes; retries must reuse the same bytes and signature.
+// Submit 发送实际 gzip 字节并返回归档回执；endpoint 为完整提交 URL
+// （可带自定义前缀），只填基地址时自动补默认路径。
+// 重试必须复用同一 gzip 与签名。
+// Submit posts the exact gzip bytes; endpoint is the full submission URL.
 func Submit(ctx context.Context, client *http.Client, endpoint string, gzipBytes, signature []byte, pubkey PublicKey) (*Receipt, error) {
 	if client == nil {
 		return nil, Errorf("Submit", CodeMalformedRequest, "client", "http client is required")
@@ -54,7 +71,7 @@ func Submit(ctx context.Context, client *http.Client, endpoint string, gzipBytes
 	if err := VerifyDigestSignature(pubkey, digest, signature); err != nil {
 		return nil, err
 	}
-	url := strings.TrimSuffix(endpoint, "/") + SubmissionsPath
+	url := SubmissionURL(endpoint)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(gzipBytes))
 	if err != nil {
 		return nil, Wrap(err, "Submit", CodeMalformedRequest, "request")

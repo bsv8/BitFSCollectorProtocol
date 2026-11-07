@@ -12,6 +12,18 @@ export const SUBMISSIONS_PATH = "/v1/submissions";
 /** 请求体类型。Request body type. */
 export const CONTENT_TYPE = "application/gzip";
 
+/**
+ * 归一化提交地址：已含提交路径（含自定义前缀）则原样使用，
+ * 否则补上默认路径。兼容旧配置（只填基地址）。
+ * Normalize the endpoint: use as-is with a path, else append the default.
+ */
+export function submissionUrl(endpoint: string): string {
+  let trimmed = endpoint.trim();
+  while (trimmed.endsWith("/")) trimmed = trimmed.slice(0, -1);
+  if (trimmed.endsWith(SUBMISSIONS_PATH)) return trimmed;
+  return trimmed + SUBMISSIONS_PATH;
+}
+
 /** 服务端成功响应。Server success response. */
 export interface Receipt {
   version: number;
@@ -37,8 +49,10 @@ function errorForStatus(status: number, body: ErrorBody): CollectorError {
 }
 
 /**
- * 发送实际 gzip 字节并返回归档回执；重试必须复用同一 gzip 与签名。
- * Post the exact gzip bytes; retries must reuse the same bytes and signature.
+ * 发送实际 gzip 字节并返回归档回执；endpoint 为完整提交 URL
+ * （可带自定义前缀），只填基地址时自动补默认路径。
+ * 重试必须复用同一 gzip 与签名。
+ * Post the exact gzip bytes; endpoint is the full submission URL.
  */
 export async function submit(
   endpoint: string,
@@ -50,7 +64,7 @@ export async function submit(
 ): Promise<Receipt> {
   if (gzip.byteLength === 0) throw new CollectorError("invalid_request", "body", "gzip bytes must not be empty");
   verifyDigestSignature(pubkey, digest, signature);
-  const url = `${endpoint.replace(/\/+$/, "")}${SUBMISSIONS_PATH}`;
+  const url = submissionUrl(endpoint);
   let response: Response;
   try {
     response = await fetch(url, {

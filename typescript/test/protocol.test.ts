@@ -7,6 +7,7 @@ import {
   gzipJson,
   privateKeySigner,
   signGzip,
+  submissionUrl,
   verifyDigestSignature,
   type FileRecord,
 } from "../src/index.js";
@@ -45,6 +46,15 @@ describe("encodeSubmission", () => {
   it("空集与重复哈希拒绝", () => {
     expect(() => encodeSubmission([])).toThrowError(CollectorError);
     expect(() => encodeSubmission([RECORDS[0]!, RECORDS[0]!])).toThrowError(CollectorError);
+  });
+});
+
+describe("submissionUrl", () => {
+  it("带 path 原样使用，不带则补默认路径", () => {
+    expect(submissionUrl("http://h:1")).toBe("http://h:1/v1/submissions");
+    expect(submissionUrl("http://h:1/")).toBe("http://h:1/v1/submissions");
+    expect(submissionUrl("https://h/x/v1/submissions")).toBe("https://h/x/v1/submissions");
+    expect(submissionUrl("https://h/x/v1/submissions/")).toBe("https://h/x/v1/submissions");
   });
 });
 

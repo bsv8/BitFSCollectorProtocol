@@ -128,6 +128,21 @@ func TestDigestSignVerifyRoundTrip(t *testing.T) {
 	}
 }
 
+func TestSubmissionURL(t *testing.T) {
+	cases := map[string]string{
+		"http://h:1":                  "http://h:1/v1/submissions",
+		"http://h:1/":                 "http://h:1/v1/submissions",
+		"https://h/x/v1/submissions":  "https://h/x/v1/submissions",
+		"https://h/x/v1/submissions/": "https://h/x/v1/submissions",
+		"http://h:1/v1/submissions":   "http://h:1/v1/submissions",
+	}
+	for in, want := range cases {
+		if got := SubmissionURL(in); got != want {
+			t.Fatalf("SubmissionURL(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestSubmitAgainstStub(t *testing.T) {
 	canonical, err := EncodeSubmission(testRecords)
 	if err != nil {
