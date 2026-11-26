@@ -1,5 +1,6 @@
 {
   "name": "bitfs-collector-protocol",
+  "packageManager": "pnpm@11.5.1",
   "version": "0.1.0",
   "description": "BitFS collector submission protocol SDK（采集提交：编码、gzip、签名、验签、HTTP 客户端）",
   "license": "AGPL-3.0-only",
@@ -19,7 +20,7 @@
     "typecheck": "tsc --noEmit",
     "build": "rm -rf dist && tsc",
     "test": "vitest run",
-    "prepublishOnly": "npm run typecheck && npm run build && npm test"
+    "prepublishOnly": "pnpm run typecheck && pnpm run build && pnpm test"
   },
   "dependencies": {
     "@noble/curves": "2.0.1",

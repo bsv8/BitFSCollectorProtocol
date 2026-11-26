@@ -19,8 +19,8 @@ go test ./...
 ## TypeScript
 
 ```sh
-npm ci
-npm run typecheck && npm run build && npm test
+pnpm install --frozen-lockfile
+pnpm run typecheck && pnpm run build && pnpm test
 ```
 
 API 与 Go 对齐：`encodeSubmission`、`gzipJson`、`digestGzip`、`signGzip`、`submit`、`verifyDigestSignature`。摘要已是 32 字节，签名与验签必须关闭预哈希（`prehash: false`）。
